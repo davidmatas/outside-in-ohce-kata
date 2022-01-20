@@ -1,56 +1,64 @@
-import ohce from "./ohce";
+import ohce from './ohce';
 
-it("greeting at night", () => {
-  const nightMoment = momentDay({isNight: true});
-  const outputMock = output();
-  const inputMock = input({onAskInput: 'Stop!'});
-  const app = ohce(nightMoment, outputMock, inputMock);
+const dayHours = [6, 7, 8, 9, 10, 11, 12];
+const eveningHours = [13, 14, 15, 16, 17, 18, 19];
+const nightHours = [20, 21, 22, 23, 0, 1, 2, 3, 4, 5];
+const dayGreeting = 'Buenos días';
+const eveningGreeting = 'Buenas tardes';
+const nightGreeting = 'Buenas noches';
+const greetingsAndHours = [
+  [dayHours, dayGreeting],
+  [eveningHours, eveningGreeting],
+  [nightHours, nightGreeting],
+];
+
+describe.each(greetingsAndHours)('greets with all moments and hours and exits', (hours, greeting) => {
+  it.each(hours)(`greets the user with ${greeting} at %p and exits`, (hour) => {
+    const hourRetriever = hourRetrieverMock(hour);
+    const output = outputMock();
+    const input = inputMock();
+    const app = ohce(hourRetriever, output, input);
+    const name = 'Pedro';
+
+    input.askInput.mockReturnValueOnce('Stop!');
+    app.run(name);
+
+    expect(output.run).toHaveBeenCalledWith(`¡${greeting} ${name}!`);
+    expect(output.run).toHaveBeenCalledWith(`Adios ${name}`);
+    expect(output.run).toHaveBeenCalledTimes(2);
+  });
+});
+
+it('it identifies palindromes and non palindromes', () => {
+  const hourRetriever = hourRetrieverMock(10);
+  const output = outputMock();
+  const input = inputMock();
+  const app = ohce(hourRetriever, output, input);
   const name = 'Pedro';
+  input.askInput.mockReturnValueOnce('hola').mockReturnValueOnce('reconocer').mockReturnValueOnce('Stop!');
 
   app.run(name);
 
- expect(outputMock.run).toHaveBeenCalledWith('¡Buenas noches Pedro!');
- expect(outputMock.run).toHaveBeenCalledWith('Adios Pedro');
+  expect(output.run).toHaveBeenCalledWith(`aloh`);
+  expect(output.run).toHaveBeenCalledWith(`¡Bonita palabra!`);
+  expect(output.run).toHaveBeenCalledWith(`Adios ${name}`);
+  expect(output.run).toHaveBeenCalledTimes(4);
 });
 
-it.skip("greeting at evening", () => {
-  const eveningMoment = momentDay({isEvening: true});
-  const outputMock = output();
-  const app = ohce(eveningMoment, outputMock);
-  const name = 'Pedro';
-
-  app.run(name);
-
- expect(outputMock.run).toHaveBeenCalledWith('¡Buenas tardes Pedro!');
-});
-
-it.skip("greeting at morning", () => {
-  const morningMoment = momentDay({isMorning: true});
-  const outputMock = output();
-  const app = ohce(morningMoment, outputMock);
-  const name = 'Pedro';
-
-  app.run(name);
-
- expect(outputMock.run).toHaveBeenCalledWith('¡Buenos días Pedro!');
-});
-
-function output() {
+function outputMock() {
   return {
-    run: jest.fn()
-  }
+    run: jest.fn(),
+  };
 }
 
-function input(params){
+function inputMock() {
   return {
-    askInput: () => params.onAskInput
-  }
+    askInput: jest.fn(),
+  };
 }
 
-function momentDay(params) {
+function hourRetrieverMock(currentHour) {
   return {
-    isNight: () => params.isNight,
-    isEvening: () => params.isEvening,
-    isMorning: () => params.isMorning,
-  }
+    getHour: () => currentHour,
+  };
 }
